@@ -18,7 +18,21 @@ const defaultProps = {
   onReflow () {},
   text: '',
   trimRight: true,
-  winWidth: undefined // for the HOC
+  winWidth: undefined, // for the HOC
+  /**
+   * Following are customized new props
+   */
+  // A custom expand button, support react node
+  customExpand: null,
+  spaceForCustomExpand: null,
+  /**
+   * Use these following two fields to support some customized html
+   * before the text you want to truncate. The measurement will count
+   * the `precedingTag` and will then remove them from the truncated text,
+   * by `precedingTagNum`
+   */
+  precedingTag: null,
+  precedingTagNum: null,
 }
 const usedProps = Object.keys(defaultProps)
 /**
@@ -39,18 +53,26 @@ class LinesEllipsis extends React.Component {
     this.units = []
     this.maxLine = 0
     this.canvas = null
+    this.previousWidth = 0;
   }
 
   componentDidMount () {
     this.initCanvas()
+    this.previousWidth = this.target.clientWidth;
     this.reflow(this.props)
   }
 
   componentDidUpdate (prevProps) {
-    if (prevProps.winWidth !== this.props.winWidth) {
+    if (
+      prevProps.winWidth !== this.props.winWidth ||
+      this.previousWidth !== this.target.clientWidth
+    ) {
       this.copyStyleToCanvas()
     }
-    if (this.props !== prevProps) {
+    if (this.previousWidth !== this.target.clientWidth || this.props !== prevProps) {
+      if (this.previousWidth !== this.target.clientWidth) {
+        this.previousWidth = this.target.clientWidth;
+      }
       this.reflow(this.props)
     }
   }
@@ -100,14 +122,15 @@ class LinesEllipsis extends React.Component {
         throw new Error(`Unsupported options basedOn: ${basedOn}`)
     }
     this.maxLine = +props.maxLine || 1
-    this.canvas.innerHTML = this.units.map((c) => {
+    const content = this.units.map((c) => {
       return `<span class='LinesEllipsis-unit'>${c}</span>`
     }).join('')
+    this.canvas.innerHTML = `${props.precedingTag}${content}`
     const ellipsisIndex = this.putEllipsis(this.calcIndexes())
     const clamped = ellipsisIndex > -1
     const newState = {
       clamped,
-      text: clamped ? this.units.slice(0, ellipsisIndex).join('') : props.text
+      text: clamped ? this.units.slice(0, ellipsisIndex - props.precedingTagNum || 0).join('') : props.text
     }
     this.setState(newState, props.onReflow.bind(this, newState))
   }
@@ -139,9 +162,12 @@ class LinesEllipsis extends React.Component {
     const lastIndex = indexes[this.maxLine]
     const units = this.units.slice(0, lastIndex)
     const maxOffsetTop = this.canvas.children[lastIndex].offsetTop
-    this.canvas.innerHTML = units.map((c, i) => {
+    const ellipsisHTML = this.props.spaceForCustomExpand ? 
+      `<wbr><span class='LinesEllipsis-ellipsis' style='margin-right: ${this.props.spaceForCustomExpand}px'>${this.props.ellipsis}</span>` :
+      `<wbr><span class='LinesEllipsis-ellipsis'>${this.props.ellipsis}</span>`
+    this.canvas.innerHTML = (this.props.precedingTag ? this.props.precedingTag : "") + units.map((c, i) => {
       return `<span class='LinesEllipsis-unit'>${c}</span>`
-    }).join('') + `<wbr><span class='LinesEllipsis-ellipsis'>${this.props.ellipsis}</span>`
+    }).join('') + ellipsisHTML
     const ndEllipsis = this.canvas.lastElementChild
     let ndPrevUnit = prevSibling(ndEllipsis, 2)
     while (ndPrevUnit &&
@@ -165,19 +191,24 @@ class LinesEllipsis extends React.Component {
 
   render () {
     const { text, clamped } = this.state
-    const { component: Component, ellipsis, trimRight, className, ...rest } = this.props
+    const { component: Component, ellipsis, trimRight, className, customExpand, forwardComponentRef, precedingTag, ...rest } = this.props
     return (
       <Component
         className={`LinesEllipsis ${clamped ? 'LinesEllipsis--clamped' : ''} ${className}`}
-        ref={node => (this.target = node)}
+        ref={node => {
+          this.target = node
+        }}
         {...omit(rest, usedProps)}
       >
+        {precedingTag ? <span dangerouslySetInnerHTML={{__html: precedingTag}} /> : null}
         {clamped && trimRight
           ? text.replace(/[\s\uFEFF\xA0]+$/, '')
           : text}
         <wbr />
         {clamped &&
           <span className='LinesEllipsis-ellipsis'>{ellipsis}</span>}
+
+        {clamped && customExpand ? customExpand : null}
       </Component>
     )
   }
