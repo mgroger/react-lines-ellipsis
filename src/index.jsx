@@ -28,11 +28,9 @@ const defaultProps = {
   /**
    * Use these following two fields to support some customized html
    * before the text you want to truncate. The measurement will count
-   * the `precedingTag` and will then remove them from the truncated text,
-   * by `precedingTagNum`
+   * the `precedingTag`
    */
   precedingTag: null,
-  precedingTagNum: null,
 }
 const usedProps = Object.keys(defaultProps)
 /**
@@ -130,7 +128,7 @@ class LinesEllipsis extends React.Component {
     const clamped = ellipsisIndex > -1
     const newState = {
       clamped,
-      text: clamped ? this.units.slice(0, ellipsisIndex - props.precedingTagNum || 0).join('') : props.text
+      text: clamped ? this.units.slice(0, ellipsisIndex || 0).join('') : props.text
     }
     this.setState(newState, props.onReflow.bind(this, newState))
   }
