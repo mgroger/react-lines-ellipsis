@@ -120,10 +120,7 @@ class LinesEllipsis extends React.Component {
         throw new Error(`Unsupported options basedOn: ${basedOn}`)
     }
     this.maxLine = +props.maxLine || 1
-    const content = this.units.map((c) => {
-      return `<span class='LinesEllipsis-unit'>${c}</span>`
-    }).join('')
-    this.canvas.innerHTML = `${props.precedingTag}${content}`
+    this.canvas.innerHTML = this.getCanvasInnerHTML(this.units)
     const ellipsisIndex = this.putEllipsis(this.calcIndexes())
     const clamped = ellipsisIndex > -1
     const newState = {
@@ -155,6 +152,12 @@ class LinesEllipsis extends React.Component {
     return indexes
   }
 
+  getCanvasInnerHTML (units) {
+    return (this.props.precedingTag ? this.props.precedingTag : "") + units.map((c, i) => {
+      return `<span class='LinesEllipsis-unit'>${c}</span>`
+    }).join('');
+  }
+
   putEllipsis (indexes) {
     if (indexes.length <= this.maxLine) return -1
     const lastIndex = indexes[this.maxLine]
@@ -163,9 +166,7 @@ class LinesEllipsis extends React.Component {
     const ellipsisHTML = this.props.spaceForCustomExpand ? 
       `<wbr><span class='LinesEllipsis-ellipsis' style='margin-right: ${this.props.spaceForCustomExpand}px'>${this.props.ellipsis}</span>` :
       `<wbr><span class='LinesEllipsis-ellipsis'>${this.props.ellipsis}</span>`
-    this.canvas.innerHTML = (this.props.precedingTag ? this.props.precedingTag : "") + units.map((c, i) => {
-      return `<span class='LinesEllipsis-unit'>${c}</span>`
-    }).join('') + ellipsisHTML
+    this.canvas.innerHTML = this.getCanvasInnerHTML(units) + ellipsisHTML
     const ndEllipsis = this.canvas.lastElementChild
     let ndPrevUnit = prevSibling(ndEllipsis, 2)
     while (ndPrevUnit &&
