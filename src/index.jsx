@@ -164,7 +164,7 @@ class LinesEllipsis extends React.Component {
     const units = this.units.slice(0, lastIndex)
     const maxOffsetTop = this.canvas.children[lastIndex].offsetTop
     const ellipsisHTML = this.props.spaceForCustomExpand ? 
-      `<wbr><span class='LinesEllipsis-ellipsis' style='margin-right: ${this.props.spaceForCustomExpand}px'>${this.props.ellipsis}</span>` :
+      `<wbr><span class='LinesEllipsis-ellipsis' style='margin-left: ${this.props.spaceForCustomExpand}px'>${this.props.ellipsis}</span>` :
       `<wbr><span class='LinesEllipsis-ellipsis'>${this.props.ellipsis}</span>`
     this.canvas.innerHTML = this.getCanvasInnerHTML(units) + ellipsisHTML
     const ndEllipsis = this.canvas.lastElementChild
